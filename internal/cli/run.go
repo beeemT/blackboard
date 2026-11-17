@@ -23,7 +23,7 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 	home, _ := os.UserHomeDir()
 	defaultDB := os.Getenv("BLACKBOARD_DB")
 	if defaultDB == "" {
-		defaultDB = filepath.Join(home, ".local", "share", "blackboard", "registry.db")
+		defaultDB = filepath.Join(home, ".blackboard", "db")
 	}
 	dbpath := fs.String("db", defaultDB, "local database file")
 	if e := fs.Parse(args); e != nil {

@@ -1,12 +1,11 @@
 ---
 name: blackboard
-description: Register and coordinate an agent's topics, worktrees, issues and merge requests in the local Blackboard registry. Use at meaningful work milestones and handoffs.
+description: Register and coordinate an agent's topics, worktrees, issues and merge requests in the local Blackboard registry. Use at meaningful work milestones (incl. start of new topics) and handoffs.
 ---
 
 # Blackboard coordination
 
-Use the configured `blackboard` executable (or this checkout's `bin/blackboard`)
-and `BLACKBOARD_DB`. Do not invent a database location shared with other users.
+Use the installed `blackboard` executable. It selects the local database automatically.
 Run `blackboard schema` for the current JSON contract. Every write is one JSON
 object sent through stdin to `blackboard apply`; do not construct shell-quoted
 strings from untrusted task text. Use a JSON encoder or a quoted heredoc.

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/beeemT/blackboard/internal/domain"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -40,5 +41,42 @@ func TestFilteredHealth(t *testing.T) {
 	r, e := filter(v, "t")
 	if e != nil || len(r.Observations) != 1 {
 		t.Fatal("lost failure health", r, e)
+	}
+}
+
+func TestDefaultDatabase(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("BLACKBOARD_DB", "")
+	var out, err bytes.Buffer
+	if Run(context.Background(), []string{"status"}, nil, &out, &err) != 0 {
+		t.Fatal(err.String())
+	}
+	if _, e := os.Stat(filepath.Join(home, ".blackboard", "db")); e != nil {
+		t.Fatal(e)
+	}
+}
+
+func TestDatabaseOverride(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	envPath := filepath.Join(home, "env.db")
+	t.Setenv("BLACKBOARD_DB", envPath)
+	var out, err bytes.Buffer
+	if Run(context.Background(), []string{"status"}, nil, &out, &err) != 0 {
+		t.Fatal(err.String())
+	}
+	if _, e := os.Stat(envPath); e != nil {
+		t.Fatal(e)
+	}
+	flagPath := filepath.Join(home, "flag.db")
+	if Run(context.Background(), []string{"--db", flagPath, "status"}, nil, &out, &err) != 0 {
+		t.Fatal(err.String())
+	}
+	if _, e := os.Stat(flagPath); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := os.Stat(filepath.Join(home, ".blackboard", "db")); !os.IsNotExist(e) {
+		t.Fatal("override unexpectedly created default database")
 	}
 }
