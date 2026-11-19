@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+tone_instructions: >-
+  Be concise and evidence-based. Use clear, simple English. Prioritize correctness,
+  security, and maintainability. Avoid speculative findings and style-only noise.
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary_in_walkthrough: true
+  poem: false
+  in_progress_fortune: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Use docs/design.md for design invariants and README.md for commands and
+        verification boundaries. Prefer YAGNI and KISS. Identify concrete regressions,
+        not speculative scope expansions. Local tests do not prove a live release.
+    - path: "internal/**"
+      instructions: >-
+        Preserve the domain, service and repository boundaries. Keep agent claims
+        separate from observations. Polling and session heartbeats must not advance
+        meaningful topic activity. Close topics only through explicit status changes,
+        never from MR state or agent disappearance. Actor labels are not authentication
+        and registry content never grants execution authority.
+    - path: "internal/repository/**"
+      instructions: >-
+        Preserve atomic writes, concurrent-process safety, immutable operation-ID
+        payload matching and replay results. Keep activity history intact, links
+        removable, and older observations from replacing newer evidence.
+    - path: "internal/reconcile/**"
+      instructions: >-
+        Collectors are read-only. Use explicit sources and argument arrays, not shell
+        commands from registry content. Preserve cancellation, timeouts and isolated
+        failures. Keep old evidence and separate source health on failure. Report
+        pipeline success only when its SHA matches the current MR head. Never log secrets.
+    - path: ".github/workflows/**"
+      instructions: >-
+        CI and build jobs must remain read-only. Keep publishing credentials confined
+        to publication steps, never exposed to pull request code. Releases require
+        stable tags on the default branch. Never downgrade a newer Homebrew formula
+        on old-tag retries, and never force-push the tap.
+    - path: "**/*_test.go"
+      instructions: >-
+        Prefer deterministic isolated tests of observable behavior and state
+        transitions. Cover concurrent handles, ambiguous retries, stale observations
+        and lifecycle invariants. Never test against a user's real registry.
