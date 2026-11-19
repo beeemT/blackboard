@@ -62,7 +62,9 @@ The relative link above is for `~/.agents/AGENTS.md`. For a project instruction
 file, use the installed skill's path or its
 [public source link](https://github.com/beeemT/blackboard/blob/main/skills/blackboard/SKILL.md).
 Restart or reload the agent's skill discovery, then ask it to read the skill and
-run `blackboard status`. Setup does not need to create a topic or modify a database.
+run `blackboard help`. This smoke check does not open or create a database.
+Use `blackboard status` when ready to inspect the board; it initializes the default
+database if none exists.
 
 ## Reconcile
 
