@@ -6,7 +6,14 @@ Tern tabs are optional context, not the source of truth.
 
 ## Start
 
-Requires Go 1.27.4+. Install with `go install ./cmd/blackboard` (uses `GOBIN`).
+Install the released CLI (macOS or Linux with Homebrew):
+
+```sh
+brew install beeemT/tap/blackboard
+blackboard help
+```
+
+Or build from source with Go 1.27.4+: `go install ./cmd/blackboard` (uses `GOBIN`).
 The CLI creates `~/.blackboard/db` automatically. Use `--db PATH` before the
 command for an isolated database; existing databases are not moved automatically.
 
@@ -23,9 +30,39 @@ All input/output is JSON. Errors go to stderr with exit code 1. Writes require
 outcome. Polling and heartbeats do not count as progress. Priority stays fixed;
 attention reflects status and time since meaningful work.
 
-Install [the agent skill](skills/blackboard/SKILL.md) at
-`~/.agents/skills/blackboard/SKILL.md`. It covers topic discovery, registration,
-links, milestones, retries and safe handling of stale evidence.
+## Agent setup
+
+Install the CLI above, then expose its bundled [Blackboard skill](skills/blackboard/SKILL.md)
+to agents that discover `~/.agents/skills`. The link follows Homebrew upgrades:
+
+```sh
+mkdir -p "$HOME/.agents/skills"
+skill="$HOME/.agents/skills/blackboard"
+# Stop if a skill is already installed; preserve it and reconcile manually.
+if [ ! -e "$skill" ] && [ ! -L "$skill" ]; then
+  ln -s "$(brew --prefix blackboard)/share/blackboard/skills/blackboard" "$skill"
+else
+  printf '%s\n' "Blackboard skill already exists; left unchanged."
+fi
+```
+
+For a source checkout, copy `skills/blackboard/` to the same location instead,
+without overwriting an existing skill. Other agents may need their own skill
+search path configured; installing the CLI does not configure agents automatically.
+
+Add this Blackboard-only directive to your `~/.agents/AGENTS.md` (preserve its
+existing instructions). If your agent does not load that file, put the directive
+in the instruction file it actually reads, such as the project's `AGENTS.md`:
+
+```markdown
+- Use the [blackboard skill](skills/blackboard/SKILL.md) when starting or joining a work topic, at meaningful milestones, and at handoffs. Keep topic, session, and work links current; close topics only when their goals are met.
+```
+
+The relative link above is for `~/.agents/AGENTS.md`. For a project instruction
+file, use the installed skill's path or its
+[public source link](https://github.com/beeemT/blackboard/blob/main/skills/blackboard/SKILL.md).
+Restart or reload the agent's skill discovery, then ask it to read the skill and
+run `blackboard status`. Setup does not need to create a topic or modify a database.
 
 ## Reconcile
 
@@ -73,7 +110,7 @@ waiting runs (up to GitHub's 100-run limit). Archive metadata is deterministic; 
 compares existing published assets and refuses any byte changes. It never overwrites
 release assets. If a rebuilt asset differs, use a new version tag rather than replace it.
 
-Once the first release is published: `brew install beeemT/tap/blackboard`. The
+Install a release with `brew install beeemT/tap/blackboard`. The
 formula includes the skill under `$(brew --prefix blackboard)/share/blackboard/skills`;
 it does not change your agent configuration. Git and `glab` remain optional collector tools.
 
