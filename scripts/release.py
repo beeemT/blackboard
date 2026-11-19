@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build release archives and a Homebrew formula locally; never publish."""
+import gzip
 import hashlib
 import os
 from pathlib import Path
@@ -8,6 +9,20 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+
+
+def archive_files(destination, files):
+    # Normalize gzip and tar metadata so source mtimes/users do not change bytes.
+    with open(destination, "wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as compressed:
+            with tarfile.open(fileobj=compressed, mode="w", format=tarfile.USTAR_FORMAT) as archive:
+                for source, name in files:
+                    source = Path(source)
+                    info = tarfile.TarInfo(name)
+                    info.size = source.stat().st_size
+                    info.mode = 0o755 if name == "blackboard" else 0o644
+                    with source.open("rb") as data:
+                        archive.addfile(info, data)
 
 
 def build(tag):
@@ -26,14 +41,12 @@ def build(tag):
             with tempfile.TemporaryDirectory() as tmp:
                 binary = Path(tmp) / "blackboard"
                 subprocess.run([
-                    "go", "build", "-trimpath", "-ldflags",
+                    "go", "build", "-trimpath", "-buildvcs=false", "-ldflags",
                     f"-s -w -X github.com/beeemT/blackboard/internal/cli.Version={version}",
                     "-o", str(binary), "./cmd/blackboard",
                 ], env={**os.environ, "CGO_ENABLED": "0", "GOOS": target_os, "GOARCH": arch}, check=True)
-                with tarfile.open(dist / asset, "w:gz") as archive:
-                    for source, name in [(binary, "blackboard"), ("LICENSE", "LICENSE"),
-                                         ("README.md", "README.md"), ("skills/blackboard/SKILL.md", "skills/blackboard/SKILL.md")]:
-                        archive.add(source, arcname=name)
+                archive_files(dist / asset, [(binary, "blackboard"), ("LICENSE", "LICENSE"),
+                              ("README.md", "README.md"), ("skills/blackboard/SKILL.md", "skills/blackboard/SKILL.md")])
             digest = hashlib.sha256((dist / asset).read_bytes()).hexdigest()
             hashes[target_os, arch] = digest
             checksums.append(f"{digest}  {asset}\n")

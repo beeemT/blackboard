@@ -7,6 +7,7 @@ permissions:
 concurrency:
   group: blackboard-release
   cancel-in-progress: false
+  queue: max
 jobs:
   build:
     if: ${{ !github.event.deleted }}
@@ -55,12 +56,36 @@ jobs:
           path: dist
       - name: Verify archive checksums
         run: cd dist && sha256sum --check checksums.txt
+      - name: Refuse changes to published assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Listing succeeds only with usable API access; never treat auth/network errors as absence.
+          gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" > releases.json
+          python3 - <<'PYTHON'
+          import json, os, pathlib, subprocess, tempfile
+          releases = [r for page in json.loads(pathlib.Path("releases.json").read_text()) for r in page]
+          matching = [r for r in releases if r["tag_name"] == os.environ["TAG"]]
+          assets = {a["name"] for r in matching for a in r["assets"]}
+          for local in [*pathlib.Path("dist").glob("*.tar.gz"), pathlib.Path("dist/checksums.txt")]:
+              if local.name not in assets:
+                  continue
+              with tempfile.TemporaryDirectory() as directory:
+                  subprocess.run(["gh", "release", "download", os.environ["TAG"],
+                                  "--repo", os.environ["GITHUB_REPOSITORY"],
+                                  "--pattern", local.name, "--dir", directory], check=True)
+                  if local.read_bytes() != (pathlib.Path(directory) / local.name).read_bytes():
+                      raise SystemExit("Published asset differs; refusing to overwrite: " + local.name)
+          PYTHON
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.tar.gz
             dist/checksums.txt
           fail_on_unmatched_files: true
+          overwrite_files: false
           generate_release_notes: true
           make_latest: legacy
       - name: Update Homebrew tap

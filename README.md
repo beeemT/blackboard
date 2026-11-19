@@ -68,7 +68,10 @@ tag. CI tests the tagged code, builds macOS/Linux arm64/amd64 archives, publishe
 a GitHub release with checksums, and updates `beeemT/tap` with the existing
 `HOMEBREW_TAP_TOKEN` secret. Publishing uses the `release` environment; any configured
 reviewer gate must approve it. CI and build jobs have read-only repository access.
-Older tags never downgrade an existing tap formula.
+Older tags never downgrade an existing tap formula. Releases queue rather than replace
+waiting runs (up to GitHub's 100-run limit). Archive metadata is deterministic; a retry
+compares existing published assets and refuses any byte changes. It never overwrites
+release assets. If a rebuilt asset differs, use a new version tag rather than replace it.
 
 Once the first release is published: `brew install beeemT/tap/blackboard`. The
 formula includes the skill under `$(brew --prefix blackboard)/share/blackboard/skills`;
