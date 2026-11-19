@@ -17,6 +17,9 @@ import (
 	"time"
 )
 
+// Version is set by the release build.
+var Version = "dev"
+
 func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer) int {
 	fs := flag.NewFlagSet("blackboard", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -31,7 +34,7 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errout io.Writer
 	}
 	args = fs.Args()
 	if len(args) == 0 || args[0] == "help" {
-		return emit(out, map[string]any{"name": "blackboard", "version": "0.1.0", "commands": []string{"apply (one JSON command on stdin)", "status [topic-id]", "find <text>", "schema", "reconcile --config FILE [--watch --interval 5m]"}, "global_flags": []string{"--db PATH (before command; or BLACKBOARD_DB)"}, "contract": "JSON stdout, JSON errors stderr; exit 0 success, 1 error. No agent dispatch or external writes."})
+		return emit(out, map[string]any{"name": "blackboard", "version": Version, "commands": []string{"apply (one JSON command on stdin)", "status [topic-id]", "find <text>", "schema", "reconcile --config FILE [--watch --interval 5m]"}, "global_flags": []string{"--db PATH (before command; or BLACKBOARD_DB)"}, "contract": "JSON stdout, JSON errors stderr; exit 0 success, 1 error. No agent dispatch or external writes."})
 	}
 	if args[0] == "schema" {
 		return emit(out, Schema())

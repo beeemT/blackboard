@@ -60,3 +60,20 @@ mise run install  # install in GOBIN
 Architecture: domain → services → repository interfaces, with SQLite persistence,
 read-only reconciliation adapters and a JSON CLI. See [design](docs/design.md).
 No automatic Tern/OMP discovery, agent steering, cloud sync or dashboard yet.
+
+## Releases
+
+After merging to the default branch, an owner can push a stable `vMAJOR.MINOR.PATCH`
+tag. CI tests the tagged code, builds macOS/Linux arm64/amd64 archives, publishes
+a GitHub release with checksums, and updates `beeemT/tap` with the existing
+`HOMEBREW_TAP_TOKEN` secret. Publishing uses the `release` environment; any configured
+reviewer gate must approve it. CI and build jobs have read-only repository access.
+Older tags never downgrade an existing tap formula.
+
+Once the first release is published: `brew install beeemT/tap/blackboard`. The
+formula includes the skill under `$(brew --prefix blackboard)/share/blackboard/skills`;
+it does not change your agent configuration. Git and `glab` remain optional collector tools.
+
+To test packaging without publishing, run `python3 scripts/release.py v0.0.0` with
+an empty `dist/` directory. It builds all four targets, checksums and the formula.
+No tag, release or tap update is created by that command.

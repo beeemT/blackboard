@@ -1,0 +1,31 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go vet ./...
+      - run: go test -race -timeout 10m ./...
+      - run: go build -o bin/blackboard ./cmd/blackboard
+      - run: python3 scripts/smoke.py
+      - run: python3 scripts/release_test.py
+      - name: Check release packaging without publishing
+        run: python3 scripts/release.py v0.0.0
+      - name: Check generated formula syntax
+        run: ruby -c dist/blackboard.rb
